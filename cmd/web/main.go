@@ -7,12 +7,26 @@ import (
 	"myapp/pkg/handlers"
 	"myapp/pkg/render"
 	"net/http"
+	"time"
+
+	"github.com/alexedwards/scs/v2"
 )
 
 const portNumber = ":9090"
+var app config.AppConfig
+var session *scs.SessionManager
 
 func main() {
-	var app config.AppConfig
+
+	// change it to true when in production
+	app.InProduction = false
+
+	session = scs.New()
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = app.InProduction
+	app.Session = session
 
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
@@ -31,8 +45,8 @@ func main() {
 	fmt.Printf("Starting application on port %s\n", portNumber)
 	// _ = http.ListenAndServe(portNumber, nil)
 
-	serve := &http.Server {
-		Addr: portNumber,
+	serve := &http.Server{
+		Addr:    portNumber,
 		Handler: routes(&app),
 	}
 
